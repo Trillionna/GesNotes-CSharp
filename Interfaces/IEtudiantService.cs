@@ -1,15 +1,7 @@
-
-using GesNotes.Models;
-
 namespace GesNotes.Interfaces;
 
-public interface IEtudiantService
+public interface IEtudiantService :
+    ILectureEtudiantService,
+    IEcritureEtudiantService
 {
-    Etudiant AjouterEtudiant(string nom, string prenom);
-
-    IReadOnlyList<Etudiant> ListerEtudiants();
-
-    Etudiant? RechercherParMatricule(string matricule);
-
-    bool AjouterNote(string matricule, double note);
 }
