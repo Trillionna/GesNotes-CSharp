@@ -3,7 +3,9 @@ using GesNotes.Interfaces;
 using GesNotes.Services;
 using GesNotes.UI;
 
-IEtudiantService service = new EtudiantService();
+IGenerateurMatricule generateur = new GenerateurMatriculeIsm();
+
+IEtudiantService service = new EtudiantService(generateur);
 
 ConsoleMenu menu = new ConsoleMenu(service);
 
