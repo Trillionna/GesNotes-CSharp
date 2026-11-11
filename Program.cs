@@ -3,7 +3,7 @@ using GesNotes.Interfaces;
 using GesNotes.Services;
 using GesNotes.UI;
 
-IGenerateurMatricule generateur = new GenerateurMatriculeAnnee();
+IGenerateurMatricule generateur = new GenerateurMatriculeIsm();
 
 IEtudiantService service = new EtudiantService(generateur);
 
