@@ -1,25 +1,25 @@
-﻿using Etudiant = (string matricule, string nom, string prenom, System.Collections.Generic.List<double> notes);
-class Program {
-    private static List<Etudiant> etudiants = new();
-    public static void Main(string[] args) {
-        etudiants.Add(("ism1", "Ba", "Amadou", new List<double>{10, 12.5, 14}));
-        int compteur = 1;
-        dynamic x = 2;
-        x = 12;
-        x = 12.5;
+﻿
+using GesNotes.Interfaces;
+using GesNotes.Models;
+using GesNotes.Services;
+
+class Program
+{
+    private static readonly IEtudiantService _service =
+        new EtudiantService();
+
+    static void Main(string[] args)
+    {
         int choix;
+
         do
         {
-            choix = Menu();
-            switch (choix)
-            {  
-                case 0: 
-                    Console.WriteLine("Au revoir");
-                    break;
+            choix = AfficherMenu();
 
+            switch (choix)
+            {
                 case 1:
-                    var etudiant = SaisieEtudiant(ref compteur);
-                    etudiants.Add(etudiant);
+                    AjouterEtudiant();
                     break;
 
                 case 2:
@@ -27,116 +27,143 @@ class Program {
                     break;
 
                 case 3:
-                    string matricule = LireChaine("Saisir le matricule à rechercher : ");
-                    double note = -1;
-                    bool result = true;
-                    do
-                    {
-                        note = LireDouble("Saisir une note entre 0 et 20 : ");
-                        if (note < 0 || note > 20)
-                        {
-                            Console.WriteLine("Note invalide");
-                            result = false;
-                        }
-                    } while (!result);
-                    result = false;
-                    do
-                    {
-                        result = AddNote(note, matricule);
-                    } while (!result);
+                    AjouterNote();
                     break;
 
                 case 4:
-                    matricule = LireChaine("Saisir le matricule : ");
-                    Etudiant? etudiantNullable= GetEtudiantByMatricule(matricule);
-                    if (etudiantNullable is null)
-                    {
-                        Console.WriteLine("Ce matricule ne correspond à aucun étudiant");
-                    } else
-                    {
-                        var notes = etudiantNullable?.notes;
-                        notes?.ForEach(n => Console.WriteLine(n));
-                    }
+                    AfficherNotes();
                     break;
-                
-                default: 
-                    Console.WriteLine("Saisir un entier entre 0 et 4");
+
+                case 0:
+                    Console.WriteLine("Au revoir !");
+                    break;
+
+                default:
+                    Console.WriteLine("Choix invalide.");
                     break;
             }
-        } while (choix != 0);
-        
+        }
+        while (choix != 0);
     }
 
-    private static int Menu() {
-        bool result = false;
-        int choix = 0;
-        do
-        {
-            Console.WriteLine("1. Ajouter un etudiant dans une liste");
-            Console.WriteLine("2. Afficher la liste des étudiants");
-            Console.WriteLine("3. Ajouter une note a un etudiant");
-            Console.WriteLine("4. Lister les notes d'un etudiant");
-            Console.WriteLine("0. Quitter");
-            Console.WriteLine("Saisir votre choix : ");
-            result = int.TryParse(Console.ReadLine(), out choix);
-        } while (!result);
-        return choix;
-    }
-
-    private static Etudiant SaisieEtudiant(ref int compteur)
+    private static int AfficherMenu()
     {
-        return (GenererMatricule(ref compteur), LireChaine("Nom : "), LireChaine("Prénom : "), []);
+        Console.WriteLine("\n--- GESTION DES NOTES ---");
+        Console.WriteLine("1. Ajouter un étudiant");
+        Console.WriteLine("2. Afficher les étudiants");
+        Console.WriteLine("3. Ajouter une note");
+        Console.WriteLine("4. Afficher les notes d'un étudiant");
+        Console.WriteLine("0. Quitter");
+
+        Console.Write("Votre choix : ");
+
+        return int.TryParse(Console.ReadLine(), out int choix)
+            ? choix
+            : -1;
     }
 
-    private static string GenererMatricule(ref int compteur)
+    private static void AjouterEtudiant()
     {
-        compteur++;
-        // return "ism" + compteur;
-        return $"ism{compteur}";
-    }
+        string nom = LireChaine("Nom : ");
+        string prenom = LireChaine("Prénom : ");
 
-    private static string LireChaine(string msg)
-    {
-        string? chaine;
-        do
-        {
-            Console.WriteLine(msg);
-            chaine = Console.ReadLine();
-        } while (chaine == null);
-        return chaine;
+        Etudiant etudiant = _service.AjouterEtudiant(nom, prenom);
+
+        Console.WriteLine(
+            $"Étudiant ajouté. Matricule : {etudiant.Matricule}"
+        );
     }
 
     private static void AfficherEtudiants()
     {
-        etudiants.ForEach(e => Console.WriteLine($"Matricule : {e.matricule} ; Nom : {e.nom} ; Prénom : {e.prenom}"));
-    }
+        var etudiants = _service.ListerEtudiants();
 
-    private static Etudiant? GetEtudiantByMatricule(string matricule)
-    {
-        return etudiants.FirstOrDefault(e => e.matricule == matricule);
-    }
-
-    private static bool AddNote(double note, string matricule)
-    {
-        Etudiant? etudiant = GetEtudiantByMatricule(matricule);
-        if (etudiant is null)
+        if (etudiants.Count == 0)
         {
-            Console.WriteLine("Le matricule ne correspond à aucun étudiant");
-            return false;
+            Console.WriteLine("Aucun étudiant enregistré.");
+            return;
         }
-        etudiant?.notes.Add(note);
-        return true;
+
+        foreach (Etudiant etudiant in etudiants)
+        {
+            Console.WriteLine(
+                $"{etudiant.Matricule} - " +
+                $"{etudiant.Nom} {etudiant.Prenom}"
+            );
+        }
     }
 
-    private static double LireDouble(string msg)
+    private static void AjouterNote()
     {
-        bool result = false;
-        double choix = 0;
+        string matricule = LireChaine("Matricule : ");
+
+        double note;
+
         do
         {
-            Console.WriteLine(msg);
-            result = double.TryParse(Console.ReadLine(), out choix);
-        } while (!result);
-        return choix;
+            Console.Write("Note (0 à 20) : ");
+
+            if (double.TryParse(Console.ReadLine(), out note)
+                && double.IsFinite(note)
+                && note >= 0 && note <= 20)
+            {
+                break;
+            }
+
+            Console.WriteLine("Note invalide.");
+        }
+        while (true);
+
+        bool resultat = _service.AjouterNote(matricule, note);
+
+        Console.WriteLine(
+            resultat
+                ? "Note ajoutée avec succès."
+                : "Étudiant introuvable."
+        );
+    }
+
+    private static void AfficherNotes()
+    {
+        string matricule = LireChaine("Matricule : ");
+
+        Etudiant? etudiant =
+            _service.RechercherParMatricule(matricule);
+
+        if (etudiant is null)
+        {
+            Console.WriteLine("Étudiant introuvable.");
+            return;
+        }
+
+        if (etudiant.Notes.Count == 0)
+        {
+            Console.WriteLine("Aucune note enregistrée.");
+            return;
+        }
+
+        foreach (double note in etudiant.Notes)
+        {
+            Console.WriteLine($"Note : {note}");
+        }
+    }
+
+    private static string LireChaine(string message)
+    {
+        string? valeur;
+
+        do
+        {
+            Console.Write(message);
+            valeur = Console.ReadLine()?.Trim();
+
+            if (!string.IsNullOrWhiteSpace(valeur))
+            {
+                return valeur;
+            }
+
+            Console.WriteLine("Ce champ est obligatoire.");
+        }
+        while (true);
     }
 }
